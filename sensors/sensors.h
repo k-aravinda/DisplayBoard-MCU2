@@ -17,7 +17,7 @@
 #ifndef __SENSORS_H__
 #define __SENSORS_H__
 
-#include "./../libraries/MsTimer2/MsTimer2.h"
+//#include "./../libraries/MsTimer2/MsTimer2.h"
 #include "./../libraries/Adafruit_ADS1X15/Adafruit_ADS1015.h"
 
 /**
@@ -34,11 +34,13 @@
 #define ERROR_SENSOR_UNSUPPORTED	(ERROR_OFFSET+6)
 #define ERROR_SENSOR_CALIBRATION	(ERROR_OFFSET+7)
 
+
+#define SENSOR_DATA_PRECISION	100000
 #define MAX_SENSOR_SAMPLES		5   /*!< maximum number of sensor samples to be taken */
 #define ACCUMULATOR_RESET_PIN   3
 
-#define ADC_CONVERSIONTIME_PERSENSOR    (MAX_SAMPLE_COUNT*ADC_CONVERSTION_TIME)       /*!< Timer for reading the sensor data */
-#define MINREQUIRED_DISPLAYREFRESH_TIME 20
+#define ADC_CONVERSIONTIME_PERSENSOR    (MAX_SAMPLE_COUNT * ADC_CONVERSTION_TIME)       /*!< Timer for reading the sensor data */
+#define MINREQUIRED_DISPLAYREFRESH_TIME 50
 /**
  * @brief sensor_data_t where the sensor reading is stored
  */
@@ -53,9 +55,6 @@ typedef union {
  *           Calibration data, previous and current data read from sensors.
  */
 typedef struct {
-  float actual_at_zero;   /*!< Actual sensor data read currently*/
-  float error_at_zero;    /*!< error part for the actual sensor data */
-  int error_threshold;	  /*!< error threshold during calibration, if exceeds this range return calibration error */
   sensor_data_t previous_data;   /*!< Previous recorded sensor data */
   sensor_data_t current_data;     /*!< Current sensor data */
 } sensor_t;
@@ -68,7 +67,7 @@ typedef enum {
   SENSOR_PRESSURE_A0 = 0, /**< peak pressure sensor MPX5010 */
   SENSOR_PRESSURE_A1, /**< peep pressure sensor MPX5010 */  
   SENSOR_DP_A0,       /**< differential pressure sensor for Peak pressure MPXV7002DP */  
-  SENSOR_DP_A1,       /**< differential pressure sensor for Peek pressure MPXV7002DP */
+  SENSOR_DP_A1,       /**< differential pressure sensor for peep pressure MPXV7002DP */
   SENSOR_O2,          /**< oxygen sensor */
   MAX_SENSORS
 } sensor_e;
@@ -103,14 +102,14 @@ public:
 	 *           Initializes all sensor variables
 	 *   @param  none
 	 **/
-	sensor() { m_data = {0,0,0,{0},{0}}; m_sample_index = 0; m_error = 0; };
+	sensor() { m_data = {{0},{0}}; m_sample_index = 0; m_error = 0; };
     /**
 	 *   @brief  Function to read the sensor samples
 	 *   @param samples - Sensor readings
 	 *   @param sample_count - number of sensor readings
 	 *   @return average of all sensor samples
 	 **/
-	int read_sensor_samples(float *samples, int sample_count);
+	bool check_for_dip();
     /**
 	 *   @brief  setter function for m_error
 	 *   @param err error code

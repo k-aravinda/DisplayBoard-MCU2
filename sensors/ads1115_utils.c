@@ -19,7 +19,7 @@
 /*
  * I2C ADC configurations
  */
-static unsigned int I2C_TIMEOUT = 12;
+static unsigned int I2C_TIMEOUT = 6;
 #ifdef UNIT_TEST
 #define ADS115_MULTIPLIER       (0.000125)
 #else
@@ -57,7 +57,6 @@ int ADS1115_ReadAvgSamplesOverI2C(Adafruit_ADS1115 *ads, int channel, float *vou
     ads->readADC_SingleEnded(channel);
     while ((digitalRead(ads->m_intPin)!=LOW) &&
            ((millis()-timeout) < I2C_TIMEOUT)) {
-      delay(1);
     }
     if((millis()-timeout) >= I2C_TIMEOUT) 
 	{
@@ -83,15 +82,13 @@ int ADS1115_ReadAvgSamplesOverI2C(Adafruit_ADS1115 *ads, int channel, float *vou
   return 0;
 }
 
-int ADS1115_ReadVoltageOverI2C(Adafruit_ADS1115 *ads, int channel, int base, int correction, float *value) {
+int ADS1115_ReadVoltageOverI2C(Adafruit_ADS1115 *ads, int channel, float *value) {
   float PressSensorVolts = 0.0;
   int err = ADS1115_ReadAvgSamplesOverI2C(ads, channel, &PressSensorVolts);
-  (void)base;
   if (err) {
 	  *value = 0;
 	  return err;
   }
-  PressSensorVolts -= correction;
   *value = (PressSensorVolts * ADS115_MULTIPLIER);
   return 0;
 }
@@ -127,7 +124,6 @@ int ADC_ReadVolageOnATMega2560(Adafruit_ADS1115 *ads, int channel, int correctio
 		ads->readADC_SingleEnded(channel);
 		while ((digitalRead(ads->m_intPin)!=LOW) &&
 			   ((millis()-timeout) < I2C_TIMEOUT)) {
-		  delay(1);
 		}
 		if((millis()-timeout) >= I2C_TIMEOUT) {
 		  Serial.println("ERROR: I2C timed out, please check connection.");

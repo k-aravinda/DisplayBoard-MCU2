@@ -45,6 +45,11 @@ int  peepErr = 0;
 int  tviErr = 0;
 int  pipErr = 0;
 
+bool refreshfullscreen_inhale = true;
+bool refreshfullscreen_exhale = true;
+unsigned long exhale_refresh_timeout = 0;
+
+
 bool bvmFailure = false;
 unsigned long int breathCount = 0;
 
@@ -174,8 +179,8 @@ void Ctrl_StateMachine_Manager(const float *sensor_data, sensorManager &sM, disp
       if (geCtrlPrevState != geCtrlState) {
                       peepErr = 0;
           pipErr = 0;
-         dM.setDisplayParam(DISPLAY_TVE,sensor_data[SENSOR_DP_A1]*1.085);
-         dM.setDisplayParam(DISPLAY_PEEP,sensor_data[SENSOR_PRESSURE_A1]); 
+         dM.setDisplayParam(DISPLAY_TVE, sensor_data[SENSOR_DP_A1]);
+         dM.setDisplayParam(DISPLAY_PEEP, sensor_data[SENSOR_PRESSURE_A1]); 
          if(sensor_data[SENSOR_PRESSURE_A1]  <  params[E_PEEP].value_curr_mem){
             peepErr = -1;
           }
@@ -183,6 +188,7 @@ void Ctrl_StateMachine_Manager(const float *sensor_data, sensorManager &sM, disp
             peepErr = 1;
           } 
          sM.enable_sensor(PRESSURE_A0 | DP_A0 | O2);
+         refreshfullscreen_inhale = true;
       }
 
         pmax = sensor_data[SENSOR_PRESSURE_A0];
@@ -202,22 +208,25 @@ void Ctrl_StateMachine_Manager(const float *sensor_data, sensorManager &sM, disp
       if (geCtrlPrevState != geCtrlState) {
         VENT_DEBUG_INFO("SC :EX ", sensor_data[SENSOR_DP_A1]);
  
-                      tviErr = 0;
+ 
+        tviErr = 0;
         dM.setDisplayParam(DISPLAY_PIP,pmax);       
         dM.setDisplayParam(DISPLAY_PLAT,sensor_data[SENSOR_PRESSURE_A1]);
         dM.setDisplayParam(DISPLAY_TVI,sensor_data[SENSOR_DP_A0]);
-        if(sensor_data[SENSOR_DP_A0] *1.085<100){
+        if(sensor_data[SENSOR_DP_A0] * 1.085 < 100){
           bvmFailure = true;
         }
-        if((sensor_data[SENSOR_DP_A0] <params[E_TV].value_curr_mem*0.85) ) {
+        if((sensor_data[SENSOR_DP_A0] <params[E_TV].value_curr_mem * 0.85) ) {
           tviErr = -1;
         }
-        if((sensor_data[SENSOR_DP_A0] > params[E_TV].value_curr_mem*1.15)) {
+        if((sensor_data[SENSOR_DP_A0] > params[E_TV].value_curr_mem * 1.15)) {
           tviErr = 1;
         }
-          sM.enable_sensor(PRESSURE_A1 | DP_A1 | O2);
-          breathCount++;
-        }
+        sM.enable_sensor(PRESSURE_A1 | DP_A1 | O2);
+        breathCount++;
+        refreshfullscreen_exhale = true;
+        exhale_refresh_timeout = millis() + 500;
+      }
       /*When the sensor measured Peek PressureValue is less than peek pressure set in the UI*/
       if ((sensor_data[SENSOR_PRESSURE_A1] < params[E_PEEP].value_curr_mem) && bSendPeepLowDetected == false) {
         bSendPeepLowDetected = true;

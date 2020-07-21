@@ -19,6 +19,8 @@
 #define NUM_OF_SAMPLES_O2		5
 #define EEPROM_O2_CALIB_ADDR	0xC
 
+#define DEBUG_O2_SENSOR 0
+
 int const x_samples[NUM_OF_SAMPLES_O2] = {0, 216, 280, 400, 1000};
 int yO2VoltX1000[NUM_OF_SAMPLES_O2] = {377, 1088, 1750, 2110, 4812};
 
@@ -149,7 +151,7 @@ int o2_sensor::sensor_zero_calibration()
 float o2_sensor::read_sensor_data() {
 
   this->m_data.previous_data.O2 = this->m_data.current_data.O2;
-  VENT_DEBUG_INFO("Sensor Data", this->m_data.previous_data.O2);
+  VENT_DEBUG_INFO("Sensor Data: ", this->m_data.previous_data.O2);
 
   return this->m_data.previous_data.O2;
 }
@@ -174,7 +176,7 @@ void o2_sensor::capture_and_store()
   
   VENT_DEBUG_FUNC_START();
 
- err = ADS1115_ReadVoltageOverI2C(m_ads, m_adc_channel, m_data.actual_at_zero, m_data.error_at_zero, &vout);
+ err = ADS1115_ReadVoltageOverI2C(m_ads, m_adc_channel, &vout);
   if(ERROR_I2C_TIMEOUT == err) {
     VENT_DEBUG_ERROR("Sensor read I2C timeout failure:", m_sensor_id);
     this->set_error(ERROR_SENSOR_READ);
@@ -184,7 +186,7 @@ void o2_sensor::capture_and_store()
   }
   m_raw_voltage = vout*1000;
   o2_value = ((vout ) +0.2034897959) /0.05099489796;
-#if DEBUG_PRESSURE_SENSOR
+#if DEBUG_O2_SENSOR
   if ((millis() - m_lasO2UpdatedTime) > SENSOR_DISPLAY_REFRESH_TIME)
   {  
     m_lasO2UpdatedTime = millis();
